@@ -1,0 +1,30 @@
+from .......Internal.Core import Core
+from .......Internal.CommandsGroup import CommandsGroup
+from .......Internal import Conversions
+
+
+# noinspection PyPep8Naming,PyAttributeOutsideInit,SpellCheckingInspection
+class TeIndication:
+	"""TeIndication commands group definition. 1 total commands, 0 Subgroups, 1 group commands"""
+
+	def __init__(self, core: Core, parent):
+		self._core = core
+		self._cmd_group = CommandsGroup("teIndication", core, parent)
+
+	def get_state(self) -> bool:
+		"""SCPI: [SOURce<HW>]:BB:DVB:DVBS:THConfig:TEINdication:[STATe] \n
+		Snippet: value: bool = driver.source.bb.dvb.dvbs.thConfig.teIndication.get_state() \n
+		Inserts transport error indication information in the header. \n
+			:return: te_indication: 1| ON| 0| OFF
+		"""
+		response = self._core.io.query_str('SOURce<HwInstance>:BB:DVB:DVBS:THConfig:TEINdication:STATe?')
+		return Conversions.str_to_bool(response)
+
+	def set_state(self, te_indication: bool) -> None:
+		"""SCPI: [SOURce<HW>]:BB:DVB:DVBS:THConfig:TEINdication:[STATe] \n
+		Snippet: driver.source.bb.dvb.dvbs.thConfig.teIndication.set_state(te_indication = False) \n
+		Inserts transport error indication information in the header. \n
+			:param te_indication: 1| ON| 0| OFF
+		"""
+		param = Conversions.bool_to_str(te_indication)
+		self._core.io.write(f'SOURce<HwInstance>:BB:DVB:DVBS:THConfig:TEINdication:STATe {param}')

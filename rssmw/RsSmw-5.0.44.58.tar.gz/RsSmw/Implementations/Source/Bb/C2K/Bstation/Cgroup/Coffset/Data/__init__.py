@@ -1,0 +1,80 @@
+from .........Internal.Core import Core
+from .........Internal.CommandsGroup import CommandsGroup
+from .........Internal import Conversions
+from ......... import enums
+from ......... import repcap
+
+
+# noinspection PyPep8Naming,PyAttributeOutsideInit,SpellCheckingInspection
+class Data:
+	"""Data commands group definition. 4 total commands, 3 Subgroups, 1 group commands"""
+
+	def __init__(self, core: Core, parent):
+		self._core = core
+		self._cmd_group = CommandsGroup("data", core, parent)
+
+	@property
+	def dselect(self):
+		"""dselect commands group. 0 Sub-classes, 1 commands."""
+		if not hasattr(self, '_dselect'):
+			from .Dselect import Dselect
+			self._dselect = Dselect(self._core, self._cmd_group)
+		return self._dselect
+
+	@property
+	def pattern(self):
+		"""pattern commands group. 0 Sub-classes, 1 commands."""
+		if not hasattr(self, '_pattern'):
+			from .Pattern import Pattern
+			self._pattern = Pattern(self._core, self._cmd_group)
+		return self._pattern
+
+	@property
+	def rate(self):
+		"""rate commands group. 0 Sub-classes, 1 commands."""
+		if not hasattr(self, '_rate'):
+			from .Rate import Rate
+			self._rate = Rate(self._core, self._cmd_group)
+		return self._rate
+
+	def set(self, data: enums.DataSourceA, baseStation=repcap.BaseStation.Default, groupNull=repcap.GroupNull.Default, offset=repcap.Offset.Default) -> None:
+		"""SCPI: [SOURce<HW>]:BB:C2K:BSTation<ST>:CGRoup<DI0>:COFFset<CH>:DATA \n
+		Snippet: driver.source.bb.c2K.bstation.cgroup.coffset.data.set(data = enums.DataSourceA.DLISt, baseStation = repcap.BaseStation.Default, groupNull = repcap.GroupNull.Default, offset = repcap.Offset.Default) \n
+		The command selects the data source for the specified channel. For the traffic channels, this value is specific for the
+		selected radio configuration. The data source for the power control bits is selected with the command
+		BB:C2K:BST<n>:CGRoup<n>:COFFset<n>:TPC:DATA. \n
+			:param data: ZERO| ONE| PATTern| PN9| PN11| PN15| PN16| PN20| PN21| PN23| DLISt PNxx The pseudo-random sequence generator is used as the data source. Different random sequence lengths can be selected. DLISt A data list is used. The data list is selected with the command :BB:C2K:BSTn:CGRoupn:COFFsetn:DATA:DSEL. ZERO | ONE Internal 0 and 1 data is used. PATTern Internal data is used. The bit pattern for the data is defined by the command :BB:C2K:BST:CGRoup:COFFset:DATA:PATT.
+			:param baseStation: optional repeated capability selector. Default value: Nr1 (settable in the interface 'Bstation')
+			:param groupNull: optional repeated capability selector. Default value: Nr0 (settable in the interface 'Cgroup')
+			:param offset: optional repeated capability selector. Default value: Nr1 (settable in the interface 'Coffset')
+		"""
+		param = Conversions.enum_scalar_to_str(data, enums.DataSourceA)
+		baseStation_cmd_val = self._cmd_group.get_repcap_cmd_value(baseStation, repcap.BaseStation)
+		groupNull_cmd_val = self._cmd_group.get_repcap_cmd_value(groupNull, repcap.GroupNull)
+		offset_cmd_val = self._cmd_group.get_repcap_cmd_value(offset, repcap.Offset)
+		self._core.io.write(f'SOURce<HwInstance>:BB:C2K:BSTation{baseStation_cmd_val}:CGRoup{groupNull_cmd_val}:COFFset{offset_cmd_val}:DATA {param}')
+
+	# noinspection PyTypeChecker
+	def get(self, baseStation=repcap.BaseStation.Default, groupNull=repcap.GroupNull.Default, offset=repcap.Offset.Default) -> enums.DataSourceA:
+		"""SCPI: [SOURce<HW>]:BB:C2K:BSTation<ST>:CGRoup<DI0>:COFFset<CH>:DATA \n
+		Snippet: value: enums.DataSourceA = driver.source.bb.c2K.bstation.cgroup.coffset.data.get(baseStation = repcap.BaseStation.Default, groupNull = repcap.GroupNull.Default, offset = repcap.Offset.Default) \n
+		The command selects the data source for the specified channel. For the traffic channels, this value is specific for the
+		selected radio configuration. The data source for the power control bits is selected with the command
+		BB:C2K:BST<n>:CGRoup<n>:COFFset<n>:TPC:DATA. \n
+			:param baseStation: optional repeated capability selector. Default value: Nr1 (settable in the interface 'Bstation')
+			:param groupNull: optional repeated capability selector. Default value: Nr0 (settable in the interface 'Cgroup')
+			:param offset: optional repeated capability selector. Default value: Nr1 (settable in the interface 'Coffset')
+			:return: data: ZERO| ONE| PATTern| PN9| PN11| PN15| PN16| PN20| PN21| PN23| DLISt PNxx The pseudo-random sequence generator is used as the data source. Different random sequence lengths can be selected. DLISt A data list is used. The data list is selected with the command :BB:C2K:BSTn:CGRoupn:COFFsetn:DATA:DSEL. ZERO | ONE Internal 0 and 1 data is used. PATTern Internal data is used. The bit pattern for the data is defined by the command :BB:C2K:BST:CGRoup:COFFset:DATA:PATT."""
+		baseStation_cmd_val = self._cmd_group.get_repcap_cmd_value(baseStation, repcap.BaseStation)
+		groupNull_cmd_val = self._cmd_group.get_repcap_cmd_value(groupNull, repcap.GroupNull)
+		offset_cmd_val = self._cmd_group.get_repcap_cmd_value(offset, repcap.Offset)
+		response = self._core.io.query_str(f'SOURce<HwInstance>:BB:C2K:BSTation{baseStation_cmd_val}:CGRoup{groupNull_cmd_val}:COFFset{offset_cmd_val}:DATA?')
+		return Conversions.str_to_scalar_enum(response, enums.DataSourceA)
+
+	def clone(self) -> 'Data':
+		"""Clones the group by creating new object from it and its whole existing subgroups
+		Also copies all the existing default Repeated Capabilities setting,
+		which you can change independently without affecting the original group"""
+		new_group = Data(self._core, self._cmd_group.parent)
+		self._cmd_group.synchronize_repcaps(new_group)
+		return new_group

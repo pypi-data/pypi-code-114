@@ -1,0 +1,27 @@
+from .........Internal.Core import Core
+from .........Internal.CommandsGroup import CommandsGroup
+
+
+# noinspection PyPep8Naming,PyAttributeOutsideInit,SpellCheckingInspection
+class CsiAp:
+	"""CsiAp commands group definition. 1 total commands, 1 Subgroups, 0 group commands"""
+
+	def __init__(self, core: Core, parent):
+		self._core = core
+		self._cmd_group = CommandsGroup("csiAp", core, parent)
+
+	@property
+	def row(self):
+		"""row commands group. 0 Sub-classes, 1 commands."""
+		if not hasattr(self, '_row'):
+			from .Row import Row
+			self._row = Row(self._core, self._cmd_group)
+		return self._row
+
+	def clone(self) -> 'CsiAp':
+		"""Clones the group by creating new object from it and its whole existing subgroups
+		Also copies all the existing default Repeated Capabilities setting,
+		which you can change independently without affecting the original group"""
+		new_group = CsiAp(self._core, self._cmd_group.parent)
+		self._cmd_group.synchronize_repcaps(new_group)
+		return new_group
