@@ -1,0 +1,138 @@
+from ......Internal.Core import Core
+from ......Internal.CommandsGroup import CommandsGroup
+from ......Internal import Conversions
+from ...... import enums
+
+
+# noinspection PyPep8Naming,PyAttributeOutsideInit,SpellCheckingInspection
+class Impairments:
+	"""Impairments commands group definition. 7 total commands, 1 Subgroups, 6 group commands"""
+
+	def __init__(self, core: Core, parent):
+		self._core = core
+		self._cmd_group = CommandsGroup("impairments", core, parent)
+
+	@property
+	def fdrift(self):
+		"""fdrift commands group. 0 Sub-classes, 1 commands."""
+		if not hasattr(self, '_fdrift'):
+			from .Fdrift import Fdrift
+			self._fdrift = Fdrift(self._core, self._cmd_group)
+		return self._fdrift
+
+	def get_fd_deviation(self) -> int:
+		"""SCPI: [SOURce<HW>]:BB:LORA:IMPairments:FDDeviation \n
+		Snippet: value: int = driver.source.bb.lora.impairments.get_fd_deviation() \n
+		No command help available \n
+			:return: fd_deviation: No help available
+		"""
+		response = self._core.io.query_str('SOURce<HwInstance>:BB:LORA:IMPairments:FDDeviation?')
+		return Conversions.str_to_int(response)
+
+	def set_fd_deviation(self, fd_deviation: int) -> None:
+		"""SCPI: [SOURce<HW>]:BB:LORA:IMPairments:FDDeviation \n
+		Snippet: driver.source.bb.lora.impairments.set_fd_deviation(fd_deviation = 1) \n
+		No command help available \n
+			:param fd_deviation: No help available
+		"""
+		param = Conversions.decimal_value_to_str(fd_deviation)
+		self._core.io.write(f'SOURce<HwInstance>:BB:LORA:IMPairments:FDDeviation {param}')
+
+	def get_fd_rate(self) -> int:
+		"""SCPI: [SOURce<HW>]:BB:LORA:IMPairments:FDRate \n
+		Snippet: value: int = driver.source.bb.lora.impairments.get_fd_rate() \n
+		No command help available \n
+			:return: fd_rate: No help available
+		"""
+		response = self._core.io.query_str('SOURce<HwInstance>:BB:LORA:IMPairments:FDRate?')
+		return Conversions.str_to_int(response)
+
+	def set_fd_rate(self, fd_rate: int) -> None:
+		"""SCPI: [SOURce<HW>]:BB:LORA:IMPairments:FDRate \n
+		Snippet: driver.source.bb.lora.impairments.set_fd_rate(fd_rate = 1) \n
+		No command help available \n
+			:param fd_rate: No help available
+		"""
+		param = Conversions.decimal_value_to_str(fd_rate)
+		self._core.io.write(f'SOURce<HwInstance>:BB:LORA:IMPairments:FDRate {param}')
+
+	# noinspection PyTypeChecker
+	def get_fd_type(self) -> enums.LoRaFreqDfTp:
+		"""SCPI: [SOURce<HW>]:BB:LORA:IMPairments:FDTYpe \n
+		Snippet: value: enums.LoRaFreqDfTp = driver.source.bb.lora.impairments.get_fd_type() \n
+		No command help available \n
+			:return: fd_type: No help available
+		"""
+		response = self._core.io.query_str('SOURce<HwInstance>:BB:LORA:IMPairments:FDTYpe?')
+		return Conversions.str_to_scalar_enum(response, enums.LoRaFreqDfTp)
+
+	def set_fd_type(self, fd_type: enums.LoRaFreqDfTp) -> None:
+		"""SCPI: [SOURce<HW>]:BB:LORA:IMPairments:FDTYpe \n
+		Snippet: driver.source.bb.lora.impairments.set_fd_type(fd_type = enums.LoRaFreqDfTp.LINear) \n
+		No command help available \n
+			:param fd_type: No help available
+		"""
+		param = Conversions.enum_scalar_to_str(fd_type, enums.LoRaFreqDfTp)
+		self._core.io.write(f'SOURce<HwInstance>:BB:LORA:IMPairments:FDTYpe {param}')
+
+	def get_foffset(self) -> int:
+		"""SCPI: [SOURce<HW>]:BB:LORA:IMPairments:FOFFset \n
+		Snippet: value: int = driver.source.bb.lora.impairments.get_foffset() \n
+		No command help available \n
+			:return: foffset: No help available
+		"""
+		response = self._core.io.query_str('SOURce<HwInstance>:BB:LORA:IMPairments:FOFFset?')
+		return Conversions.str_to_int(response)
+
+	def set_foffset(self, foffset: int) -> None:
+		"""SCPI: [SOURce<HW>]:BB:LORA:IMPairments:FOFFset \n
+		Snippet: driver.source.bb.lora.impairments.set_foffset(foffset = 1) \n
+		No command help available \n
+			:param foffset: No help available
+		"""
+		param = Conversions.decimal_value_to_str(foffset)
+		self._core.io.write(f'SOURce<HwInstance>:BB:LORA:IMPairments:FOFFset {param}')
+
+	def get_state(self) -> bool:
+		"""SCPI: [SOURce<HW>]:BB:LORA:IMPairments:STATe \n
+		Snippet: value: bool = driver.source.bb.lora.impairments.get_state() \n
+		No command help available \n
+			:return: state: No help available
+		"""
+		response = self._core.io.query_str('SOURce<HwInstance>:BB:LORA:IMPairments:STATe?')
+		return Conversions.str_to_bool(response)
+
+	def set_state(self, state: bool) -> None:
+		"""SCPI: [SOURce<HW>]:BB:LORA:IMPairments:STATe \n
+		Snippet: driver.source.bb.lora.impairments.set_state(state = False) \n
+		No command help available \n
+			:param state: No help available
+		"""
+		param = Conversions.bool_to_str(state)
+		self._core.io.write(f'SOURce<HwInstance>:BB:LORA:IMPairments:STATe {param}')
+
+	def get_st_error(self) -> int:
+		"""SCPI: [SOURce<HW>]:BB:LORA:IMPairments:STERror \n
+		Snippet: value: int = driver.source.bb.lora.impairments.get_st_error() \n
+		No command help available \n
+			:return: st_error: No help available
+		"""
+		response = self._core.io.query_str('SOURce<HwInstance>:BB:LORA:IMPairments:STERror?')
+		return Conversions.str_to_int(response)
+
+	def set_st_error(self, st_error: int) -> None:
+		"""SCPI: [SOURce<HW>]:BB:LORA:IMPairments:STERror \n
+		Snippet: driver.source.bb.lora.impairments.set_st_error(st_error = 1) \n
+		No command help available \n
+			:param st_error: No help available
+		"""
+		param = Conversions.decimal_value_to_str(st_error)
+		self._core.io.write(f'SOURce<HwInstance>:BB:LORA:IMPairments:STERror {param}')
+
+	def clone(self) -> 'Impairments':
+		"""Clones the group by creating new object from it and its whole existing subgroups
+		Also copies all the existing default Repeated Capabilities setting,
+		which you can change independently without affecting the original group"""
+		new_group = Impairments(self._core, self._cmd_group.parent)
+		self._cmd_group.synchronize_repcaps(new_group)
+		return new_group
