@@ -1,0 +1,42 @@
+from typing import List
+
+from .......Internal.Core import Core
+from .......Internal.CommandsGroup import CommandsGroup
+from .......Internal import Conversions
+from .......Internal.Utilities import trim_str_response
+
+
+# noinspection PyPep8Naming,PyAttributeOutsideInit,SpellCheckingInspection
+class Bstation:
+	"""Bstation commands group definition. 2 total commands, 0 Subgroups, 2 group commands"""
+
+	def __init__(self, core: Core, parent):
+		self._core = core
+		self._cmd_group = CommandsGroup("bstation", core, parent)
+
+	def get_catalog(self) -> List[str]:
+		"""SCPI: [SOURce<HW>]:BB:W3GPp:SETTing:TMODel:BSTation:CATalog \n
+		Snippet: value: List[str] = driver.source.bb.w3Gpp.setting.tmodel.bstation.get_catalog() \n
+		Queries the list of test models defined by the standard for the downlink. \n
+			:return: catalog: string
+		"""
+		response = self._core.io.query_str('SOURce<HwInstance>:BB:W3GPp:SETTing:TMODel:BSTation:CATalog?')
+		return Conversions.str_to_str_list(response)
+
+	def get_value(self) -> str:
+		"""SCPI: [SOURce<HW>]:BB:W3GPp:SETTing:TMODel:BSTation \n
+		Snippet: value: str = driver.source.bb.w3Gpp.setting.tmodel.bstation.get_value() \n
+		Selects a standard test model for the downlink. \n
+			:return: bstation: string
+		"""
+		response = self._core.io.query_str('SOURce<HwInstance>:BB:W3GPp:SETTing:TMODel:BSTation?')
+		return trim_str_response(response)
+
+	def set_value(self, bstation: str) -> None:
+		"""SCPI: [SOURce<HW>]:BB:W3GPp:SETTing:TMODel:BSTation \n
+		Snippet: driver.source.bb.w3Gpp.setting.tmodel.bstation.set_value(bstation = '1') \n
+		Selects a standard test model for the downlink. \n
+			:param bstation: string
+		"""
+		param = Conversions.value_to_quoted_str(bstation)
+		self._core.io.write(f'SOURce<HwInstance>:BB:W3GPp:SETTing:TMODel:BSTation {param}')

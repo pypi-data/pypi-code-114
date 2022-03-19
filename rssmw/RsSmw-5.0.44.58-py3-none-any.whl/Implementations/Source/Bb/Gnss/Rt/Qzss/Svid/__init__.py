@@ -1,0 +1,50 @@
+from ........Internal.Core import Core
+from ........Internal.CommandsGroup import CommandsGroup
+from ........Internal.RepeatedCapability import RepeatedCapability
+from ........ import repcap
+
+
+# noinspection PyPep8Naming,PyAttributeOutsideInit,SpellCheckingInspection
+class Svid:
+	"""Svid commands group definition. 2 total commands, 2 Subgroups, 0 group commands
+	Repeated Capability: SatelliteSvid, default value after init: SatelliteSvid.Nr1"""
+
+	def __init__(self, core: Core, parent):
+		self._core = core
+		self._cmd_group = CommandsGroup("svid", core, parent)
+		self._cmd_group.rep_cap = RepeatedCapability(self._cmd_group.group_name, 'repcap_satelliteSvid_get', 'repcap_satelliteSvid_set', repcap.SatelliteSvid.Nr1)
+
+	def repcap_satelliteSvid_set(self, satelliteSvid: repcap.SatelliteSvid) -> None:
+		"""Repeated Capability default value numeric suffix.
+		This value is used, if you do not explicitely set it in the child set/get methods, or if you leave it to SatelliteSvid.Default
+		Default value after init: SatelliteSvid.Nr1"""
+		self._cmd_group.set_repcap_enum_value(satelliteSvid)
+
+	def repcap_satelliteSvid_get(self) -> repcap.SatelliteSvid:
+		"""Returns the current default repeated capability for the child set/get methods"""
+		# noinspection PyTypeChecker
+		return self._cmd_group.get_repcap_enum_value()
+
+	@property
+	def azimuth(self):
+		"""azimuth commands group. 0 Sub-classes, 1 commands."""
+		if not hasattr(self, '_azimuth'):
+			from .Azimuth import Azimuth
+			self._azimuth = Azimuth(self._core, self._cmd_group)
+		return self._azimuth
+
+	@property
+	def elevation(self):
+		"""elevation commands group. 0 Sub-classes, 1 commands."""
+		if not hasattr(self, '_elevation'):
+			from .Elevation import Elevation
+			self._elevation = Elevation(self._core, self._cmd_group)
+		return self._elevation
+
+	def clone(self) -> 'Svid':
+		"""Clones the group by creating new object from it and its whole existing subgroups
+		Also copies all the existing default Repeated Capabilities setting,
+		which you can change independently without affecting the original group"""
+		new_group = Svid(self._core, self._cmd_group.parent)
+		self._cmd_group.synchronize_repcaps(new_group)
+		return new_group
