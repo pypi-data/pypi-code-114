@@ -1,0 +1,66 @@
+from setuptools import find_packages, setup
+from os import path
+
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md')) as f:
+    long_description = f.read()
+setup(
+    name='FreeTAKServer',
+    packages=find_packages(include = ['FreeTAKServer', 'FreeTAKServer.*']),
+    version='1.9.9',
+
+    license='Eclipse License',
+    description='An open source server for the TAK family of applications.',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    author='FreeTAKTeam',
+    author_email='FreeTakTeam@gmail.com.com',
+    url='https://github.com/FreeTAKTeam/FreeTakServer',
+    download_url='https://github.com/FreeTAKTeam/FreeTakServer/releases',
+    keywords=['TAK', 'OPENSOURCE'],
+    install_requires=[
+        'click==8.0.4',
+        'colorama==0.4.4',
+        'defusedxml==0.7.1',
+        'dnspython==1.16.0',
+        'eventlet==0.29.0',
+        'Flask==1.1.2',
+        'Flask-Cors==3.0.9',
+        'Flask-HTTPAuth==4.2.0',
+        'Flask-Login==0.5.0',
+        'Flask-SocketIO==4.3.1',
+        'Flask-SQLAlchemy==2.4.4',
+        'geographiclib==1.52',
+        'geopy==2.2.0',
+        'greenlet==1.1.2',
+        'itsdangerous==2.0.1',
+         'testresources==2.0.1', 
+        'Jinja2==2.11.2',
+        'lxml==4.6.5',
+        'MarkupSafe==2.0.1',
+        'monotonic==1.6',
+        'pathlib==1.0.1',
+        'protobuf==3.14.0',
+        'psutil==5.9.0',
+        'pykml==0.2.0',
+        'python-engineio==3.13.2',
+        'python-socketio==4.6.0',
+        'PyYAML==6.0',
+        'ruamel.yaml==0.17.21',
+        'ruamel.yaml.clib==0.2.6',
+        'six==1.16.0',
+        'SQLAlchemy==1.3.20',
+        'tabulate==0.8.7',
+        'Werkzeug==2.0.3',
+        'WTForms==2.3.3',
+        'pyOpenSSL==22.0.0'
+    ],
+    extras_require = {'ui': ['FreeTAKServer_UI']},
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Developers',
+        'Topic :: Software Development :: Build Tools',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.8',
+    ],
+)
