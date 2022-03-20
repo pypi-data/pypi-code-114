@@ -1,0 +1,38 @@
+# -*- coding: utf-8 -*-
+from setuptools import setup
+
+packages = \
+['charmonium', 'charmonium.cache']
+
+package_data = \
+{'': ['*']}
+
+install_requires = \
+['attrs>=20.3.0,<21.0.0',
+ 'bitmath>=1.3.3,<2.0.0',
+ 'charmonium.determ-hash>=0.2.2,<0.3.0',
+ 'charmonium.freeze>=0.5.3,<0.6.0',
+ 'fasteners>=0.16,<0.17']
+
+entry_points = \
+{'console_scripts': ['cache = charmonium.cache._cli:main']}
+
+setup_kwargs = {
+    'name': 'charmonium.cache',
+    'version': '1.2.8',
+    'description': 'Provides a decorator for caching a function between subsequent processes.',
+    'long_description': '==========================\ncharmonium.cache\n==========================\n\n.. image:: https://img.shields.io/pypi/v/charmonium.cache\n   :alt: PyPI Package\n   :target: https://pypi.org/project/charmonium.cache\n.. image:: https://img.shields.io/pypi/dm/charmonium.cache\n   :alt: PyPI Downloads\n   :target: https://pypi.org/project/charmonium.cache\n.. image:: https://img.shields.io/pypi/l/charmonium.cache\n   :alt: PyPI License\n   :target: https://github.com/charmoniumQ/charmonium.cache/blob/main/LICENSE\n.. image:: https://img.shields.io/pypi/pyversions/charmonium.cache\n   :alt: Python Versions\n   :target: https://pypi.org/project/charmonium.cache\n.. image:: https://img.shields.io/github/stars/charmoniumQ/charmonium.cache?style=social\n   :alt: GitHub stars\n   :target: https://github.com/charmoniumQ/charmonium.cache\n.. image:: https://github.com/charmoniumQ/charmonium.cache/actions/workflows/main.yaml/badge.svg\n   :alt: CI status\n   :target: https://github.com/charmoniumQ/charmonium.cache/actions/workflows/main.yaml\n.. image:: https://img.shields.io/github/last-commit/charmoniumQ/charmonium.determ_hash\n   :alt: GitHub last commit\n   :target: https://github.com/charmoniumQ/charmonium.cache/commits\n.. image:: https://img.shields.io/librariesio/sourcerank/pypi/charmonium.cache\n   :alt: libraries.io sourcerank\n   :target: https://libraries.io/pypi/charmonium.cache\n.. image:: https://img.shields.io/badge/docs-yes-success\n   :alt: Documentation link\n   :target: https://charmoniumq.github.io/charmonium.cache/\n.. image:: http://www.mypy-lang.org/static/mypy_badge.svg\n   :target: https://mypy.readthedocs.io/en/stable/\n   :alt: Checked with Mypy\n.. image:: https://img.shields.io/badge/code%20style-black-000000.svg\n   :target: https://github.com/psf/black\n   :alt: Code style: black\n\nProvides a decorator for caching a function between subsequent processes.\n\nWhenever the function is called with the same arguments, the result is\nloaded from the cache instead of computed. This cache is **persistent\nacross runs**. If the arguments, source code, or enclosing environment\nhave changed, the cache recomputes the data transparently (**no need\nfor manual invalidation**).\n\nThe use case is meant for iterative development, especially on scientific\nexperiments. Many times a developer will tweak some of the code but not\nall. Often, reusing intermediate results saves a significant amount of time\nevery run.\n\nSee full documentation `here`_.\n\n.. _`here`: https://charmoniumq.github.io/charmonium.cache/\n\n\nQuickstart\n----------\n\nIf you don\'t have ``pip`` installed, see the `pip install\nguide`_.\n\n.. _`pip install guide`: https://pip.pypa.io/en/latest/installing/\n\n.. code-block:: console\n\n    $ pip install charmonium.cache\n\n>>> from charmonium.cache import memoize\n>>> i = 0\n>>> @memoize()\n... def square(x):\n...     print("recomputing")\n...     # Imagine a more expensive computation here.\n...     return x**2 + i\n...\n>>> square(4)\nrecomputing\n16\n>>> square(4) # no need to recompute\n16\n>>> i = 1\n>>> square(4) # global i changed; must recompute\nrecomputing\n17\n\nAdvantages\n----------\n\nWhile there are other libraries and techniques for memoization, I believe this\none is unique because it is:\n\n1. **Correct with respect to source-code changes:** The cache detects if you\n   edit the source code or change a file which the program reads (provided they\n   use this library\'s right file abstraction). Users never need to manually\n   invalidate the cache, so long as the functions are pure (unlike\n   `joblib.Memory`_, `Klepto`_).\n\n   It is precise enough that it will ignore changes in unrelated functions in\n   the file, but it will detect changes in relevant functions in other files. It\n   even detects changes in global variables (as in the example above). See\n   `Detecting Changes in Functions`_ for details.\n\n2. **Useful between runs and across machines:** The cache can persist on the\n   disk (unlike `functools.lru_cache`_). Moreover, a cache can be shared on the\n   network, so that if *any* machine has computed the function for the same\n   source-source and arguments, this value can be reused by *any other* machine,\n   provided your datatype is de/serializable on those platforms.\n\n3. **Easy to adopt:** Only requires adding one line (`decorator`_) to\n   the function definition.\n\n4. **Bounded in size:** The cache won\'t take up too much space. This\n   space is partitioned across all memoized functions according to the\n   heuristic.\n\n5. **Supports smart heuristics:** Motivated by academic literature, I use cache\n   policies that can take into account time-to-recompute and storage-size in\n   addition to recency, unlike `LRU`_.\n\n6. **Overhead aware:** The library measures the time saved versus overhead. It\n   warns the user if the overhead of caching is not worth it.\n\n.. _`Detecting Changes in Functions`: https://charmoniumq.github.io/charmonium.cache/tutorial.html#detecting-changes-in-functions\n.. _`Klepto`: https://klepto.readthedocs.io/en/latest/\n.. _`joblib.Memory`: https://joblib.readthedocs.io/en/latest/memory.html\n.. _`functools.lru_cache`: https://docs.python.org/3/library/functools.html#functools.lru_cache\n.. _`decorator`: https://docs.python.org/3/glossary.html#term-decorator\n.. _`LRU`: https://en.wikipedia.org/wiki/Cache_replacement_policies#Least_recently_used_(LRU)\n\nMemoize CLI\n-----------\n\nMake is good for compiling code, but falls short for data science. To get\ncorrect results, you have to incorporate *every* variable your result depends on\ninto a file or part of the filename. If you put it in a file, you only have one\nversion cached at a time; if you put it in the filename, you have to squeeze the\nvariable into a short string. In either case, stale results will accumulate\nunboundedly, until you run ``make clean`` which also purges the fresh\nresults. Finally, it is a significant effor to rewrite shell scripts in make.\n\n``memoize`` makes it easy to memoize steps in shell scripts, correctly. Just add\n``memoize`` to the start of the line. If the command, its arguments,\nor its input files change, then ``command arg1 arg2 ...`` will be\nrerun. Otherwise, the output files (including stderr and stdout) will be\nproduced from a prior run. ``memoize`` uses ptrace to automatically determine\nwhat inputs you depend on and what outputs you produce.\n\n::\n\n   memoize command arg1 arg2\n   # or\n   memoize --key=$(date +%Y-%m-%d) -- command arg1 arg2\n\nSee `CLI`_ for more details.\n\n.. _`CLI`: https://charmoniumq.github.io/charmonium.cache/cli.html\n',
+    'author': 'Samuel Grayson',
+    'author_email': 'sam+dev@samgrayson.me',
+    'maintainer': None,
+    'maintainer_email': None,
+    'url': 'https://github.com/charmoniumQ/charmonium.cache',
+    'packages': packages,
+    'package_data': package_data,
+    'install_requires': install_requires,
+    'entry_points': entry_points,
+    'python_requires': '>=3.8,<4.0',
+}
+
+
+setup(**setup_kwargs)
