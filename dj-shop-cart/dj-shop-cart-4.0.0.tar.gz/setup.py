@@ -1,0 +1,30 @@
+# -*- coding: utf-8 -*-
+from setuptools import setup
+
+packages = \
+['dj_shop_cart', 'dj_shop_cart.migrations', 'migrations']
+
+package_data = \
+{'': ['*']}
+
+install_requires = \
+['Django>=3', 'attrs>=21.4.0,<22.0.0']
+
+setup_kwargs = {
+    'name': 'dj-shop-cart',
+    'version': '4.0.0',
+    'description': 'Simple django cart manager for your django projects.',
+    'long_description': '# dj-shop-cart\n\nA simple and flexible cart manager for your django projects.\n\n[![pypi](https://badge.fury.io/py/dj-shop-cart.svg)](https://pypi.org/project/dj-shop-cart/)\n[![python](https://img.shields.io/pypi/pyversions/dj-shop-cart)](https://github.com/Tobi-De/dj-shop-cart)\n[![django](https://img.shields.io/pypi/djversions/dj-shop-cart)](https://github.com/Tobi-De/dj-shop-cart)\n[![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/Tobi-De/dj-shop-cart/blob/master/LICENSE)\n[![black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)\n\n## Features\n\n- Add, remove, decrement and clear items from cart\n- Authenticated users cart can be saved to database\n- Write custom methods to easily hook into the items add / remove flow\n- Custom **get_price** method to ensure that the cart always have an up-to-date products price\n- Each item in the cart hold a reference to the associated product\n- Metadata data can be attached to cart items\n- Supports specification of product variation details\n- Available context processor for easy access to the user cart in all your django templates\n- Swappable backend storage, with session and database provided by default\n\n\n## Installation\n\nInstall **dj-shop-cart** with pip or poetry.\n\n```bash\n  pip install dj-shop-cart\n```\n\n## Usage/Examples\n\n```python3\n\n# settings.py\n\nTEMPLATES = [\n    {\n        "OPTIONS": {\n            "context_processors": [\n                ...,\n                "dj_shop_cart.context_processors.cart", # If you want access to the cart instance in all templates\n            ],\n        },\n    }\n]\n\n# models.py\n\nfrom django.db import models\nfrom dj_shop_cart.cart import CartItem\nfrom decimal import Decimal\n\nclass Product(models.Model):\n    ...\n\n    def get_price(self, item:CartItem)->Decimal:\n        """The only requirements of the dj_shop_cart package apart from the fact that the products you add\n        to the cart must be instances of django based models. You can use a different name for this method\n        but be sure to update the corresponding setting (see Configuration). Even if you change the name the\n        function signature should match this one.\n        """\n\n\n# views.py\n\nfrom dj_shop_cart.cart import get_cart_class\nfrom django.http import HttpRequest\nfrom django.views.decorators.http import require_POST\n\n# This function has nothing to do with the package itself\nfrom .helpers import collect_params\n\nCart = get_cart_class()\n\n\n@require_POST\ndef add_product(request: HttpRequest):\n    product, quantity = collect_params(request)\n    cart = Cart.new(request)\n    cart.add(product, quantity=quantity)\n    ...\n\n\n@require_POST\ndef remove_product(request: HttpRequest):\n    product, quantity = collect_params(request)\n    cart = Cart.new(request)\n    cart.remove(product, quantity=quantity)\n    ...\n\n\n@require_POST\ndef empty_cart(request: HttpRequest):\n    Cart.new(request).empty()\n    ...\n\n```\n\n## Configuration\n\nConfigure the cart behaviour in your Django settings. All settings are optional and must be strings if defined.\n\n| Name                          | Description                                                                                                                                                          | Default                              |\n|-------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------|\n| CART_SESSION_KEY              | The key used to store the cart in session                                                                                                                            | CART-ID                              |\n| CART_CLASS                    | The path to the **Cart** class to use. If you are using a custom class it must subclass **dj_shop_cart.cart.Cart**                                                   | dj_shop_cart.cart.Cart               |\n| CART_PRODUCT_GET_PRICE_METHOD | The method name to use to dynamically get the price on the product instance                                                                                          | get_price                            |\n| CART_STORAGE_BACKEND          | The path to the storage backend to use. If you define a custom storage backend, it should follow the **Storage** protocol, see the **Backend Storage section** below | dj_shop_cart.storages.SessionStorage |\n\n## API reference\n\n**TODO**\n\n## Storage Backend\n\n**TODO**\n\n## Used By\n\nThis project is used by the following companies:\n\n- [Fêmy bien être](https://www.femybienetre.com/)\n\n## Development\n\nPoetry is required (not really, you can set up the environment however you want and install the requirements\nmanually) to set up a virtualenv, install it then run the following:\n\n```sh\npoetry install\npre-commit install --install-hooks\n```\n\nTests can then be run quickly in that environment:\n\n```sh\npytest\n```\n\n## Feedback\n\nIf you have any feedback, please reach out to me at degnonfrancis@gmail.com\n\n## Todos\n\n- More examples\n- Add an example for a custom redis backend\n- Complete the example project\n- Write more tests\n',
+    'author': 'Tobi DEGNON',
+    'author_email': 'tobidegnon@protonmail.com',
+    'maintainer': None,
+    'maintainer_email': None,
+    'url': 'https://github.com/Tobi-De/dj-shop-cart',
+    'packages': packages,
+    'package_data': package_data,
+    'install_requires': install_requires,
+    'python_requires': '>=3.8,<4.0',
+}
+
+
+setup(**setup_kwargs)
