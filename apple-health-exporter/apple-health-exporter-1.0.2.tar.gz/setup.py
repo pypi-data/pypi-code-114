@@ -1,0 +1,34 @@
+# -*- coding: utf-8 -*-
+from setuptools import setup
+
+packages = \
+['apple_health_exporter']
+
+package_data = \
+{'': ['*']}
+
+install_requires = \
+['lxml>=4.8.0,<5.0.0', 'pandas>=1.4.1,<2.0.0', 'pyarrow>=7.0.0,<8.0.0']
+
+entry_points = \
+{'console_scripts': ['apple-health-exporter = apple_health_exporter:main']}
+
+setup_kwargs = {
+    'name': 'apple-health-exporter',
+    'version': '1.0.2',
+    'description': 'Python module to export Apple Health dump file to a data frame for analysis',
+    'long_description': '# Apple Health Exporter\n\nThis Python 3 module takes a dump of Apple Health data (the `export.zip` file\ngenerated through an Apple Health data export) and saves a subset of fields and\nrecords to a [feather](https://github.com/wesm/feather) file. This can then be\nread by both Python and R.\n\n## Getting started\n\nThe package can be used either as an executable module, or as an importable library.\n\nFirst, install from PyPI (preferably in a new virtual environment):\n\n```bash\n# optional: create virtualenv within directory to avoid polluting system Python\npython -m venv .venv\nsource .venv/bin/activate\n\npip install apple-health-exporter\n```\n\nThis will also install the following dependencies:\n\n- [`pandas`](http://pandas.pydata.org/)\n- [`pyarrow`](https://pypi.org/project/pyarrow/)\n- [`lxml`](http://lxml.de/index.html)\n\n### Installing Feather in R\n\nIf you\'d like to do data analysis on the generated data file in R, then you\'ll\nneed the feather package:\n\n```r\ninstall.packages("feather")\n```\n\n## Usage\n\n1. Export Apple Health data from within the Health app.\n\n![click on "user" icon and then on "export health data"](images/exporting.png)\n\n2. Pick a location (I usually export to Dropbox) and then run the script:\n\n```bash\napple-health-exporter ~/Dropbox/export.zip ~/Downloads/data.feather\n# alternative method:\npython -m apple_health_exporter ~/Dropbox/export.zip ~/Downloads/data.feather\n\n# Specify XML file name in case zip file has been renamed\napple-health-exporter ~/Dropbox/export_renamed.zip ~/Downloads/data.feather --xml_file_name export.zip\n```\n\n> The export zip file contains an XML file containing\n> actual data. By default, this name can be inferred\n> from the stem of the zip file name (for example\n> `export.zip` will contain a file named `export.xml`).\n> However, if the zip file has been renamed, you may\n> need to explicitly provide the name of the XML file\n> with the `--xml_file_name` option.\n\n3. Now you can load the data in either R or Python.\n\n   In R:\n\n   ```r\n   library(feather)\n   library(dplyr)\n   data <- read_feather("~/Downloads/data.feather")\n   data %>% group_by(type) %>% summarize(entries = n())\n   ```\n\n   ```\n   # A tibble: 28 × 2\n                                               type entries\n                                             <chr>   <int>\n   1     HKQuantityTypeIdentifierActiveEnergyBurned   84742\n   2      HKQuantityTypeIdentifierAppleExerciseTime    5997\n   3      HKQuantityTypeIdentifierBasalEnergyBurned   52477\n   4      HKQuantityTypeIdentifierBodyFatPercentage      44\n   5               HKQuantityTypeIdentifierBodyMass      84\n   6          HKQuantityTypeIdentifierBodyMassIndex      40\n   7         HKQuantityTypeIdentifierDietaryCalcium      84\n   8   HKQuantityTypeIdentifierDietaryCarbohydrates      84\n   9     HKQuantityTypeIdentifierDietaryCholesterol      84\n   10 HKQuantityTypeIdentifierDietaryEnergyConsumed      84\n   # ... with 18 more rows\n   ```\n\n   In Python:\n\n   ```python\n   import pandas as pd\n   data = pd.read_feather("data.feather")\n   data.groupby("type").size()\n   ```\n\n   ```\n   type\n   HKQuantityTypeIdentifierActiveEnergyBurned           84742\n   HKQuantityTypeIdentifierAppleExerciseTime             5997\n   HKQuantityTypeIdentifierBasalEnergyBurned            52477\n   HKQuantityTypeIdentifierBodyFatPercentage               44\n   HKQuantityTypeIdentifierBodyMass                        84\n   HKQuantityTypeIdentifierBodyMassIndex                   40\n   HKQuantityTypeIdentifierDietaryCalcium                  84\n   HKQuantityTypeIdentifierDietaryCarbohydrates            84\n   HKQuantityTypeIdentifierDietaryCholesterol              84\n   HKQuantityTypeIdentifierDietaryEnergyConsumed           84\n   HKQuantityTypeIdentifierDietaryFatMonounsaturated       84\n   HKQuantityTypeIdentifierDietaryFatPolyunsaturated       84\n   HKQuantityTypeIdentifierDietaryFatSaturated             84\n   HKQuantityTypeIdentifierDietaryFatTotal                 84\n   HKQuantityTypeIdentifierDietaryFiber                    84\n   HKQuantityTypeIdentifierDietaryIron                     84\n   HKQuantityTypeIdentifierDietaryPotassium                84\n   HKQuantityTypeIdentifierDietaryProtein                  84\n   HKQuantityTypeIdentifierDietarySodium                   84\n   HKQuantityTypeIdentifierDietarySugar                    84\n   HKQuantityTypeIdentifierDietaryVitaminC                 84\n   HKQuantityTypeIdentifierDistanceCycling                 21\n   HKQuantityTypeIdentifierDistanceWalkingRunning       49111\n   HKQuantityTypeIdentifierFlightsClimbed                 562\n   HKQuantityTypeIdentifierHeartRate                    26502\n   HKQuantityTypeIdentifierHeight                          41\n   HKQuantityTypeIdentifierLeanBodyMass                    39\n   HKQuantityTypeIdentifierStepCount                     8810\n   dtype: int64\n   ```\n\n## Examples\n\nSome examples using this data export can be found in my\n[apple-health-examples](https://github.com/mganjoo/apple-health-examples) repo.\n\n## Contributing\n\nThis package uses [Poetry](https://python-poetry.org) for package management.\n\nTo build and test the package locally, check out the repo and:\n\n1. Install Poetry (one-time) using one of the methods on the [Installation](https://python-poetry.org/docs/#installation) page.\n\n2. Install all dependencies (automatically creates a virtual environment):\n\n```\npoetry install\n```\n\n3. Make changes, and test using the following commands:\n\n```bash\n# Type checking\npoetry run mypy .\n# Linting\npoetry run flake8 apple_health_exporter/\n# Formatting\npoetry run black .\n```\n\n## Contributors\n\nThanks to contributors who have helped improve this package!\n\n- [@aapris](https://github.com/aapris)\n- [@brunoamaral](https://github.com/brunoamaral)\n- [@Jeanselme](https://github.com/Jeanselme)\n',
+    'author': 'Milind Ganjoo',
+    'author_email': 'milind.ganjoo@gmail.com',
+    'maintainer': None,
+    'maintainer_email': None,
+    'url': 'https://github.com/mganjoo/apple-health-exporter',
+    'packages': packages,
+    'package_data': package_data,
+    'install_requires': install_requires,
+    'entry_points': entry_points,
+    'python_requires': '>=3.8,<4.0',
+}
+
+
+setup(**setup_kwargs)
