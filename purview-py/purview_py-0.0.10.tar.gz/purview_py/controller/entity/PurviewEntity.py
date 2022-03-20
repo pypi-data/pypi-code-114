@@ -1,0 +1,4 @@
+
+
+class PurviewEntity(object):
+    pass
