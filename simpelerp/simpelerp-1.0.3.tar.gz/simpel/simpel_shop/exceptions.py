@@ -1,0 +1,2 @@
+class NotPartnerPermissionDenied(Exception):
+    pass
