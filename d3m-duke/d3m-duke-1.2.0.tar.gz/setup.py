@@ -1,0 +1,15 @@
+from distutils.core import setup
+
+setup(name='d3m-duke',
+    version='1.2.0',
+    description='Tabular Dataset Summarization System',
+    packages=['Duke'],
+    license='Apache-2.0',
+    url='https://gitlab.com/datadrivendiscovery/contrib/duke',
+    install_requires=['pandas >= 0.19.2',
+        'numpy>=1.13.3',
+        'gensim>=3.2.0,<4.0.0',
+        'inflection>=0.3.1',
+        'ontospy>=1.8.6'],
+    include_package_data=True,
+)
