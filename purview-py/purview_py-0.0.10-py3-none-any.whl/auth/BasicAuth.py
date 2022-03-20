@@ -1,0 +1,3 @@
+
+class BasicAuth(object):
+    pass
