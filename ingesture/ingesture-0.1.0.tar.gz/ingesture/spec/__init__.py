@@ -1,0 +1,1 @@
+from ingesture.spec.base import BaseSpec
