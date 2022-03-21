@@ -1,0 +1,2 @@
+IP_SECURITY_STRING = "ProntoNet External\0\0"
+RS232_SECURITY_STRING = "PNE:"
