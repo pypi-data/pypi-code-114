@@ -1,0 +1,1 @@
+from ingestor.common.static_node_generator import StaticNodeGenerator
