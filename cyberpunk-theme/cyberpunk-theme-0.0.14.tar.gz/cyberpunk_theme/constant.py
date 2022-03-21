@@ -1,0 +1,3 @@
+BACKGROUND_COLOR = "#121519"
+FONT_FAMILY = "Liberation Mono"
+FONT_SIZE = 11
