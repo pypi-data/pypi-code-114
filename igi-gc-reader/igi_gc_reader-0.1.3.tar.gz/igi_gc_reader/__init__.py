@@ -1,0 +1,1 @@
+from igi_gc_reader.app import GcFileTransformer
