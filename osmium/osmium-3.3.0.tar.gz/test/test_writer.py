@@ -1,0 +1,216 @@
+# SPDX-License-Identifier: BSD
+#
+# This file is part of Pyosmium.
+#
+# Copyright (C) 2022 Sarah Hoffmann.
+from contextlib import contextmanager
+from collections import OrderedDict
+import uuid
+
+import pytest
+
+import osmium as o
+
+from helpers import mkdate
+
+
+@pytest.fixture
+def test_writer(tmp_path):
+    @contextmanager
+    def _WriteExpect(filename, expected):
+        writer = o.SimpleWriter(str(filename), 1024*1024)
+        try:
+            yield writer
+        finally:
+            writer.close()
+
+        assert filename.read_text().strip() == expected
+
+
+    def _create(expected):
+        filename = tmp_path / (str(uuid.uuid4()) + '.opl')
+        return _WriteExpect(filename, expected)
+
+    return _create
+
+
+class O:
+    def __init__(self, **params):
+        for k,v in params.items():
+            setattr(self, k, v)
+
+
+@pytest.mark.parametrize('osmobj, out_attr', [
+      (O(id=None), '0 v0 dV c0 t i0 u T'),
+      (O(visible=None), '0 v0 dV c0 t i0 u T'),
+      (O(version=None), '0 v0 dV c0 t i0 u T'),
+      (O(uid=None), '0 v0 dV c0 t i0 u T'),
+      (O(user=None), '0 v0 dV c0 t i0 u T'),
+      (O(timestamp=None), '0 v0 dV c0 t i0 u T'),
+      (O(id=1), '1 v0 dV c0 t i0 u T'),
+      (O(id=-99), '-99 v0 dV c0 t i0 u T'),
+      (O(visible=True), '0 v0 dV c0 t i0 u T'),
+      (O(visible=False), '0 v0 dD c0 t i0 u T'),
+      (O(version=23), '0 v23 dV c0 t i0 u T'),
+      (O(user="Schmidt"), '0 v0 dV c0 t i0 uSchmidt T'),
+      (O(user=""), '0 v0 dV c0 t i0 u T'),
+      (O(uid=987), '0 v0 dV c0 t i987 u T'),
+      (O(timestamp='2012-04-14T20:58:35Z'), '0 v0 dV c0 t2012-04-14T20:58:35Z i0 u T'),
+      (O(timestamp=mkdate(2009, 4, 14, 20, 58, 35)), '0 v0 dV c0 t2009-04-14T20:58:35Z i0 u T'),
+      (O(timestamp='1970-01-01T00:00:01Z'), '0 v0 dV c0 t1970-01-01T00:00:01Z i0 u T')
+    ])
+class TestWriteAttributes:
+    def test_node_simple_attr(self, test_writer, osmobj, out_attr):
+        with test_writer('n' + out_attr + ' x y') as w:
+            w.add_node(osmobj)
+
+    def test_way_simple_attr(self, test_writer, osmobj, out_attr):
+        with test_writer('w' + out_attr + ' N') as w:
+            w.add_way(osmobj)
+
+    def test_relation_simple_attr(self, test_writer, osmobj, out_attr):
+        with test_writer('r' + out_attr + ' M') as w:
+            w.add_relation(osmobj)
+
+
+@pytest.mark.parametrize('tags,out', [
+     (None, 'T'),
+     ([], 'T'),
+     ({}, 'T'),
+     ((("foo", "bar"), ), 'Tfoo=bar'),
+     ((("foo", "bar"), ("2", "1")), 'Tfoo=bar,2=1'),
+     ({'test' : 'drive'}, 'Ttest=drive'),
+     (OrderedDict((('a', 'b'), ('c', '3'))), 'Ta=b,c=3'),
+    ])
+class TestWriteTags:
+    def test_node_tags(self, test_writer, tags, out):
+        with test_writer('n0 v0 dV c0 t i0 u ' + out + ' x y') as w:
+            w.add_node(O(tags=tags))
+
+    def test_way_tags(self, test_writer, tags, out):
+        with test_writer('w0 v0 dV c0 t i0 u ' + out + ' N') as w:
+            w.add_way(O(tags=tags))
+
+    def test_relation_tags(self, test_writer, tags, out):
+        with test_writer('r0 v0 dV c0 t i0 u ' + out + ' M') as w:
+            w.add_relation(O(tags=tags))
+
+
+@pytest.mark.parametrize("location,out", [((1.1234561, 0.1234561), 'x1.1234561 y0.1234561'),
+                                          ((30.46, 50.37), 'x30.46 y50.37'),
+                                          (None, 'x y')])
+def test_location(test_writer, location, out):
+    with test_writer('n0 v0 dV c0 t i0 u T ' + out) as w:
+        w.add_node(O(location=location))
+
+
+def test_node_list(test_writer):
+    with test_writer('w0 v0 dV c0 t i0 u T Nn1,n2,n3,n-4') as w:
+        w.add_way(O(nodes=(1, 2, 3, -4)))
+
+def test_node_list_none(test_writer):
+    with test_writer('w0 v0 dV c0 t i0 u T N') as w:
+        w.add_way(O(nodes=None))
+
+
+def test_relation_members(test_writer):
+    with test_writer('r0 v0 dV c0 t i0 u T Mn34@foo,r200@,w1111@x') as w:
+        w.add_relation(O(members=(('n', 34, 'foo'),
+                                  ('r', 200, ''),
+                                  ('w', 1111, 'x')
+                                 )))
+
+def test_relation_members_None(test_writer):
+    with test_writer('r0 v0 dV c0 t i0 u T M') as w:
+        w.add_relation(O(members=None))
+
+
+def test_node_object(test_writer, simple_handler):
+    node_opl = 'n235 v1 dV c0 t i0 u Telephant=yes x98.7 y-3.45'
+
+    with test_writer(node_opl) as w:
+        simple_handler(node_opl, node=lambda o: w.add_node(o))
+
+
+def test_location_object(test_writer, simple_handler):
+    node_opl = 'n235 v1 dV c0 t i0 u Telephant=yes x98.7 y-3.45'
+
+    with test_writer('n0 v0 dV c0 t i0 u T x98.7 y-3.45') as w:
+        simple_handler(node_opl, node=lambda o: w.add_node(O(location=o.location)))
+
+
+def test_tag_object(test_writer, simple_handler):
+    node_opl = 'n235 v1 dV c0 t i0 u Telephant=yes x98.7 y-3.45'
+
+    with test_writer('n0 v0 dV c0 t i0 u Telephant=yes x y') as w:
+        simple_handler(node_opl, node=lambda o: w.add_node(O(tags=o.tags)))
+
+
+def test_way_object(test_writer, simple_handler):
+    way_opl = 'w45 v14 dV c0 t i0 u Thighway=top Nn23,n56,n34,n23'
+
+    with test_writer(way_opl) as w:
+        simple_handler(way_opl, way=lambda o: w.add_way(o))
+
+
+def test_nodelist_object(test_writer, simple_handler):
+    way_opl = 'w45 v14 dV c0 t i0 u Thighway=top Nn23,n56,n34,n23'
+
+    with test_writer('w0 v0 dV c0 t i0 u T Nn23,n56,n34,n23') as w:
+        simple_handler(way_opl, way=lambda o: w.add_way(O(nodes=o.nodes)))
+
+
+def test_noderef_object(test_writer, simple_handler):
+    way_opl = 'w45 v14 dV c0 t i0 u Thighway=top Nn23,n56,n34,n23'
+
+    with test_writer('w0 v0 dV c0 t i0 u T Nn56,n34') as w:
+        simple_handler(way_opl,
+                       way=lambda o: w.add_way(O(nodes=[n for n in o.nodes if n.ref != 23])))
+
+
+def test_relation_object(test_writer, simple_handler):
+    rel_opl = 'r2 v0 dV c0 t i0 u Ttype=multipolygon Mw1@,w2@,w3@inner'
+
+    with test_writer(rel_opl) as w:
+        simple_handler(rel_opl, relation=lambda o: w.add_relation(o))
+
+
+def test_memberlist_object(test_writer, simple_handler):
+    rel_opl = 'r2 v0 dV c0 t i0 u Ttype=multipolygon Mw1@,w2@,w3@inner'
+
+    with test_writer('r0 v0 dV c0 t i0 u T Mw1@,w2@,w3@inner') as w:
+        simple_handler(rel_opl,
+                       relation=lambda o: w.add_relation(O(members=o.members)))
+
+
+def test_member_object(test_writer, simple_handler):
+    rel_opl = 'r2 v0 dV c0 t i0 u Ttype=multipolygon Mw1@,w2@,w3@inner'
+
+    with test_writer('r0 v0 dV c0 t i0 u T Mw1@,w2@') as w:
+        simple_handler(rel_opl,
+                       relation=lambda o: w.add_relation(O(members=[m for m in o.members
+                                                                    if m.role != 'inner'])))
+
+
+def test_set_custom_header(tmp_path):
+    fn = str(tmp_path / 'test.xml')
+    h = o.io.Header()
+    h.set('generator', 'foo')
+    h.add_box(o.osm.Box(0.1, -4, 10, 45))
+
+    writer = o.SimpleWriter(fn, 4000, h)
+
+    try:
+        writer.add_node({})
+    finally:
+        writer.close()
+
+    rd = o.io.Reader(fn)
+    try:
+        h = rd.header()
+        assert h.get('generator') == 'foo'
+        assert h.box().valid()
+        assert h.box().bottom_left == o.osm.Location(0.1, -4)
+        assert h.box().top_right == o.osm.Location(10, 45)
+    finally:
+        rd.close()
