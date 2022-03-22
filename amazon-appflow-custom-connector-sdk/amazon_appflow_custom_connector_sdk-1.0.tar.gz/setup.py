@@ -1,0 +1,37 @@
+from setuptools import setup
+
+setup(name='amazon_appflow_custom_connector_sdk',
+      version='1.0',
+      description='Amazon AppFlow Custom Connector SDK',
+      url='https://github.com/awslabs/aws-appflow-custom-connector-python',
+      author='Amazon AppFlow',
+      license="Apache License 2.0",
+      include_package_data=True,
+      python_requires=">= 3.6",
+      packages=['custom_connector_tools', 'custom_connector_tests', 'configuration', 'exceptions', 'invokers', 'validation', 'custom_connector_integ_test', 'configuration', 'tests', 'antlr', 'resources', 'grammar', 'utils', 'appflow_test', 'custom_connector_sdk', 'connector', 'salesforce-example-test-files', 'lambda_handler', 'marketplace', 'test', 'custom_connector_queryfilter', 'queryfilter', 'custom_connector_example', 'handlers', 'integ_test', 'query', 'test'],
+      package_dir={
+        "": ".",
+        "configuration":"./custom_connector_tests/configuration",
+        "exceptions":"./custom_connector_tests/exceptions",
+        "invokers":"./custom_connector_tests/invokers",
+        "validation":"./custom_connector_tests/validation",
+        "connector": "./custom_connector_sdk/connector",
+        "lambda_handler": "./custom_connector_sdk/lambda_handler",
+        "marketplace":"./custom_connector_sdk/marketplace",
+        "test":"./custom_connector_sdk/test",
+        "queryfilter":"./custom_connector_queryfilter/queryfilter",
+        "tests":"./custom_connector_queryfilter/tests",
+        "antlr":"./custom_connector_queryfilter/queryfilter/antlr",
+        "grammar":"./custom_connector_queryfilter/queryfilter/grammar",
+        "resources":"./custom_connector_sdk/test/resources",
+        "salesforce-example-test-files":"./custom_connector_example/salesforce-example-test-files",
+        "handlers":"./custom_connector_example/handlers",
+        "appflow_test":"./custom_connector_integ_test/appflow_test",
+        "configuration":"./custom_connector_integ_test/configuration",
+        "utils":"./custom_connector_integ_test/utils",
+        "integ_test":"./custom_connector_example/integ_test",
+        "query":"./custom_connector_example/query",
+        "test":"./custom_connector_example/test"
+      },
+      zip_safe=False
+      )
