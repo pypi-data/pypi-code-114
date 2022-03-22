@@ -1,0 +1,16 @@
+try:
+    from sqlalchemy.ext.declarative import declarative_base
+    SQLALCHEMY_ENV = True
+except:
+    SQLALCHEMY_ENV = False
+
+if SQLALCHEMY_ENV:
+    SqlalchemyBase = declarative_base()
+
+class DOBase:
+    def to_json(self):
+        raise NotImplementedError
+
+    def from_json(self):
+        raise NotImplementedError
+
