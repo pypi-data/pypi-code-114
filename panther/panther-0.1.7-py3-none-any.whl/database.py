@@ -1,0 +1,3 @@
+
+SupportedDatabase = ('MySQL', 'PostgreSQL', 'SQLite')
+
