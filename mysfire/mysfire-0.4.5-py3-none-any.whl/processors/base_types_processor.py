@@ -1,0 +1,61 @@
+from typing import List, Optional
+
+import torch
+
+from . import register_processor
+from ._processor import Processor
+
+
+@register_processor
+class IntProcessor(Processor):
+    @classmethod
+    def typestr(cls) -> str:
+        return "int"
+
+    def collate(self, batch: List[Optional[int]]) -> torch.Tensor:
+        return torch.tensor(batch)
+
+    def __call__(self, value: str) -> Optional[int]:
+        return int(value) if value else None
+
+
+@register_processor
+class FloatProcessor(Processor):
+    @classmethod
+    def typestr(cls) -> str:
+        return "float"
+
+    def collate(self, batch: List[Optional[float]]) -> torch.Tensor:
+        return torch.tensor(batch)
+
+    def __call__(self, value: str) -> Optional[float]:
+        return float(value) if value else None
+
+
+@register_processor
+class StringProcessor(Processor):
+    @classmethod
+    def typestr(cls) -> str:
+        return "str"
+
+    def collate(self, batch: List[Optional[str]]) -> List[str]:
+        return [b or "" for b in batch]
+
+    def __call__(self, value: str) -> Optional[str]:
+        return value or None
+
+
+@register_processor
+class StringListProcessor(Processor):
+    def __init__(self, delimiter: str = "###"):
+        self._delimiter = delimiter
+
+    @classmethod
+    def typestr(cls) -> str:
+        return "str.list"
+
+    def collate(self, batch: List[Optional[List[str]]]) -> List[List[str]]:
+        return [b or [] for b in batch]
+
+    def __call__(self, value: str) -> Optional[List[str]]:
+        return value.split(self._delimiter) if value else None
