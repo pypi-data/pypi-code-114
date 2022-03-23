@@ -1,0 +1,300 @@
+import os
+import pathlib
+import configparser
+import urllib
+import requests
+from requests.exceptions import RequestException
+import rich
+from rich.console import Console
+from loci_checkmarx import __version__, PROG_NAME
+from xml.parsers.expat import ExpatError
+import defusedxml.minidom as mdxml
+
+LOCI_CONFIG_DIR = "loci"
+LOCI_CONFIG_FILENAME = "loci-config.ini"
+LOCI_PROJECT_FILENAME = ".loci-project.ini"
+
+console = Console()
+
+
+class LociError(Exception):
+    pass
+
+
+# This function from https://github.com/tensorflow/tensorboard/blob/master/tensorboard/uploader/util.py
+# Apache 2 licensed
+def get_user_config_directory():
+    """Returns a platform-specific root directory for user config settings."""
+    # On Windows, prefer %LOCALAPPDATA%, then %APPDATA%, since we can expect the
+    # AppData directories to be ACLed to be visible only to the user and admin
+    # users (https://stackoverflow.com/a/7617601/1179226). If neither is set,
+    # return None instead of falling back to something that may be world-readable.
+    if os.name == "nt":
+        appdata = os.getenv("LOCALAPPDATA")
+        if appdata:
+            return appdata
+        appdata = os.getenv("APPDATA")
+        if appdata:
+            return appdata
+        return None
+    # On non-windows, use XDG_CONFIG_HOME if set, else default to ~/.config.
+    xdg_config_home = os.getenv("XDG_CONFIG_HOME")
+    if xdg_config_home:
+        return xdg_config_home
+    return os.path.join(os.path.expanduser("~"), ".config")
+
+
+def get_loci_dir() -> str:
+    loci_dir = pathlib.Path(get_user_config_directory(), LOCI_CONFIG_DIR)
+    # Create the directory if it doesn't exist yet.
+    loci_dir.mkdir(parents=True, exist_ok=True)
+    return str(loci_dir)
+
+
+def get_loci_config_location() -> str:
+    return str(pathlib.Path(get_loci_dir(), LOCI_CONFIG_FILENAME))
+
+
+def get_loci_config():
+    try:
+        config = configparser.ConfigParser()
+        config.sections()
+        config.read(get_loci_config_location())
+        return config
+    except configparser.Error:
+        print_error("Unable to read config file at " + get_loci_config_location())
+        raise LociError
+
+
+def is_loci_setup() -> bool:
+    try:
+        config = get_loci_config()
+        if config["default"]["api_key"] is not None and config["default"]["loci_server"] is not None:
+            return True
+        return False
+    except LociError:
+        return False
+    except KeyError:
+        return False
+
+
+def write_loci_config_value(key, value):
+    try:
+        config = get_loci_config()
+    except LociError:
+        pass
+
+    if "default" not in config:
+        config["default"] = {}
+    config["default"][key] = value
+
+    with open(get_loci_config_location(), "w") as configfile:
+        config.write(configfile)
+
+
+def get_loci_config_value(key):
+    try:
+        config = get_loci_config()
+        if "default" not in config:
+            return None
+        if key not in config["default"]:
+            return None
+        return config["default"][key]
+    except LociError:
+        return None
+
+
+def loci_api_req(api_url, method="GET", data={}, params={}, show_loading=True):
+    url = urllib.parse.urljoin(get_loci_config_value("loci_server"), api_url)
+    headers = {"X-API-KEY": get_loci_config_value("api_key")}
+
+    try:
+        if show_loading:
+            with working():
+                r = requests.request(method, url, headers=headers, timeout=5, json=data, params=params)
+        else:
+            r = requests.request(method, url, headers=headers, timeout=5, json=data, params=params)
+
+        if r.ok:
+            if len(r.text) == 0:
+                # Handles cases where there's a 204 or something with non content, but success.
+                return {}
+            res = r.json()
+            return res
+        elif r.status_code == 400:
+            # This is similar to a 422, but we generate this, not FastAPI.
+            print_error("The input given was incorrect, please check all your parameters.", fatal=False)
+            print_error("    Details: [bold]%s[/bold]" % r.json()["detail"])
+        elif r.status_code == 401:
+            print_error("Your credentials are not correct, please check your API key configuration.", fatal=False)
+            print_error("    Details: [bold]%s[/bold]" % r.json()["detail"])
+            return None
+        elif r.status_code == 403:
+            print_error("You do not appear to have permissions to perform that action.", fatal=False)
+            print_error("    Details: [bold]%s[/bold]" % r.json()["detail"])
+            return None
+        elif r.status_code == 404:
+            print_error("Not found.", fatal=False)
+            print_error("    Details: [bold]%s[/bold]" % r.json()["detail"])
+            return None
+        elif r.status_code == 422:
+            print_error("The input given was incorrect, please check all your parameters.")
+            # The reason we don't give details here is that a 422 is normally automatically generated by the server,
+            # not something we can control and to which we can add details.
+            return None
+        else:
+            print_error("The server has returned an unknown error. Please see the server logs for more information.")
+            return None
+    except RequestException:
+        print_error("The Loci server did not respond. Is the URL correct and the server at [bold]%s[/bold] running?"
+                    % get_loci_config_value("loci_server"))
+        return None
+
+
+def _print_line(header, msg):
+    rich.print(header, msg)
+
+
+def print_info(msg):
+    _print_line("[[bold blue]INFO[/bold blue]]", msg)
+
+
+def print_success(msg):
+    _print_line("[[bold green]SUCCESS[/bold green]]", msg)
+
+
+def print_warning(msg):
+    _print_line("[[bold yellow]WARN[/bold yellow]]", msg)
+
+
+def print_error(msg, fatal=True):
+    _print_line("[[bold red]ERROR[/bold red]]", msg)
+
+    if fatal:
+        quit(-1)
+
+
+def print_version():
+    rich.print("[bold]%s[/bold] v%s" % (PROG_NAME, __version__))
+
+
+def working():
+    return console.status("Working...")
+
+
+def get_project_id_from_config_in_dir(fq_directory):
+    config = configparser.ConfigParser()
+    config.sections()
+
+    current_dir = fq_directory
+    last_dir = ""
+
+    while True:
+        try:
+            config.read(pathlib.Path(current_dir, LOCI_PROJECT_FILENAME))
+            return int(config["default"]["project_id"]), config["default"]["project_name"]
+        except KeyError:
+            if current_dir == pathlib.Path.home() or current_dir == last_dir:
+                return None, None
+            last_dir = current_dir
+            current_dir = os.path.dirname(current_dir)
+
+
+def calculate_artifact_from_fq_filename(fq_file_path, src_root_dir, basename):
+    # Next, we need to figure out if we can autodetect the full artifact filename (usually by looking
+    # for the source root directory).
+    tmp_srd = "/" + src_root_dir + "/"
+    if tmp_srd in fq_file_path:
+        # Easy mode, slice away the source root dir and everything before it.
+        idx = fq_file_path.index(tmp_srd)
+        return fq_file_path[idx+len(tmp_srd):]
+    else:
+        # Harder mode. We can guess the name by looking at the basename of the "path" stored in the run.
+        return "asdasd"
+
+
+class Result():
+    def __init__(self,
+                 query_name: str,
+                 severity: str,
+                 src_filename: str,
+                 src_line: int,
+                 sink_filename: str,
+                 sink_line: int):
+        self.query_name = query_name
+        self.severity = severity
+        self.src_filename = src_filename
+        self.src_line = src_line
+        self.sink_filename = sink_filename
+        self.sink_line = sink_line
+
+    def get_src_artifact(self):
+        return self.src_filename + ":" + self.src_line
+
+    def get_sink_artifact(self):
+        return self.sink_filename + ":" + self.sink_line
+
+
+def get_text(nodelist):
+    rc = []
+    for node in nodelist:
+        if node.nodeType == node.TEXT_NODE:
+            rc.append(node.data)
+    return ''.join(rc)
+
+
+def open_results_file_and_get_results(input_filename):
+    full_results_list = []
+
+    print_info("Opening Checkmarx XML Results file...")
+    try:
+        with open(input_filename) as fd:
+            cm_dom = mdxml.parse(fd)
+    except FileNotFoundError:
+        print_error(f"Failed to open the file '{input_filename}'. Please check to make sure it exists.")
+        quit(-1)
+    except ExpatError:
+        print_error(f"Failed to parse the file '{input_filename}'. It does not appear to be valid XML.")
+        quit(-1)
+    if cm_dom.firstChild.nodeName != "CxXMLResults":
+        print_error(f"Failed to parse the file '{input_filename}'. It does not appear to be a valid "
+                    "Checkmarx results file.")
+        quit(-1)
+
+    print_success("Checkmarx file loaded.")
+
+    print_info("Loading results into memory...")
+
+    # Everything that follows is based on the state of Checkmarx files as of March 2022. Since there is no schema,
+    # this is likely to change over time. Correct things here if they do.
+    query_list = cm_dom.getElementsByTagName("Query")
+
+    for query in query_list:
+        query_name = query.getAttribute("name").replace("_", " ")
+
+        results_list = query.getElementsByTagName("Result")
+
+        for result in results_list:
+            severity = result.getAttribute("Severity")
+            src_filename = result.getAttribute("FileName")
+            src_line = result.getAttribute("Line")
+
+            # Get sink PathNode info.
+            path_list = result.getElementsByTagName("Path")
+
+            if path_list.length > 1:
+                print_error(f"A Result for '{query_name}' has indicated that more than one path"
+                            " exists inside it. This is not currently handled, reach out to the"
+                            " developer and raise an issue with this error message.", fatal=False)
+            path = path_list[0]
+            path_nodes = path.getElementsByTagName("PathNode")
+            bottom_node = path_nodes[-1]
+
+            sink_filename = get_text(bottom_node.getElementsByTagName("FileName")[0].childNodes)
+            sink_line = get_text(bottom_node.getElementsByTagName("Line")[0].childNodes)
+
+            tmp_result = Result(query_name, severity, src_filename, src_line, sink_filename, sink_line)
+            full_results_list.append(tmp_result)
+
+    print_success("All results loaded into memory.")
+    return full_results_list
