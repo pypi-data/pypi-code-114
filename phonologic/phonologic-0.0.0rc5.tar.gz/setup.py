@@ -1,0 +1,25 @@
+import setuptools
+
+setuptools.setup(
+    name='phonologic',
+    version='0.0.0rc5',
+    author='Robert Gale',
+    author_email='galer@ohsu.edu',
+    packages=[
+        'phonologic',
+        'phonologic._error_analysis',
+        'phonologic._file_parsing',
+        'phonologic.systems',
+    ],
+    url='https://github.com/rcgale/phonologic',
+    description='',
+    install_requires=[],
+    include_package_data=True,
+    package_data={
+        'phonologic': [
+            '**/*.py',
+            '**/*.txt',
+            '**/*.json',
+        ]
+    },
+)
