@@ -1,0 +1,126 @@
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext as _build_ext
+import sys,os
+
+PACKAGE_NAME = 'fastlvm'
+MINIMUM_PYTHON_VERSION = 3, 6
+
+
+def check_python_version():
+    """Exit when the Python version is too low."""
+    if sys.version_info < MINIMUM_PYTHON_VERSION:
+        sys.exit("Python {}.{}+ is required.".format(*MINIMUM_PYTHON_VERSION))
+
+
+def read_package_variable(key):
+    """Read the value of a variable from the package without importing."""
+    module_path = os.path.join(PACKAGE_NAME, '__init__.py')
+    with open(module_path) as module:
+        for line in module:
+            parts = line.strip().split(' ')
+            if parts and parts[0] == key:
+                return parts[-1].strip("'")
+    raise KeyError("'{0}' not found in '{1}'".format(key, module_path))
+
+        
+check_python_version()
+version = read_package_variable('__version__')
+
+class build_ext(_build_ext):
+    def finalize_options(self):
+        _build_ext.finalize_options(self)
+        # Prevent numpy from thinking it is still in its setup process:
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        self.include_dirs.append(numpy.get_include())
+
+
+covertreec_module = Extension('covertreec',
+                              sources=['src/cover_tree/covertreecmodule.cxx', 'src/commons/utils.cpp',
+                                       'src/cover_tree/cover_tree.cpp'],
+                              include_dirs=['lib/'],
+                              extra_compile_args=['-march=corei7-avx', '-pthread', '-std=c++14'],
+                              extra_link_args=['-march=corei7-avx', '-pthread', '-std=c++14']
+                              )
+
+kmeans_module = Extension('kmeansc',
+                          sources=['src/k_means/kmeanscmodule.cxx', 'src/commons/utils.cpp',
+                                   'src/commons/suff_stats.cpp', 'src/cover_tree/cover_tree.cpp',
+                                   'src/k_means/model.cpp', 'src/k_means/fmm.cpp'],
+                          include_dirs=['lib/'],
+                          extra_compile_args=['-march=corei7-avx', '-pthread', '-std=c++14'],
+                          extra_link_args=['-march=corei7-avx', '-pthread', '-std=c++14']
+                          )
+
+gmm_module = Extension('gmmc',
+                       sources=['src/gmm/gmmcmodule.cxx', 'src/commons/utils.cpp', 'src/commons/vose.cpp',
+                                'src/commons/suff_stats.cpp', 'src/gmm/model.cpp', 'src/gmm/fmm.cpp'],
+                       include_dirs=['lib/'],
+                       extra_compile_args=['-march=corei7-avx', '-pthread', '-std=c++14'],
+                       extra_link_args=['-march=corei7-avx', '-pthread', '-std=c++14']
+                       )
+
+lda_module = Extension('ldac',
+                       sources=['src/lda/ldacmodule.cxx', 'src/commons/utils.cpp', 'src/commons/stringtokenizer.cpp',
+                                'src/commons/dataio.cpp', 'src/commons/vose.cpp', 'src/lda/model.cpp',
+                                'src/lda/lda.cpp'],
+                       include_dirs=['lib/'],
+                       extra_compile_args=['-march=corei7-avx', '-pthread', '-std=c++14'],
+                       extra_link_args=['-march=corei7-avx', '-pthread', '-std=c++14']
+                       )
+
+hdp_module = Extension('hdpc',
+                       sources=['src/hdp/hdpcmodule.cxx', 'src/commons/utils.cpp', 'src/commons/stringtokenizer.cpp',
+                                'src/commons/dataio.cpp', 'src/commons/vose.cpp', 'src/commons/stirling.cpp',
+                                'src/hdp/model.cpp', 'src/hdp/hdp.cpp'],
+                       include_dirs=['lib/'],
+                       extra_compile_args=['-march=corei7-avx', '-pthread', '-std=c++14'],
+                       extra_link_args=['-march=corei7-avx', '-pthread', '-std=c++14']
+                       )
+
+glda_module = Extension('gldac',
+                        sources=['src/glda/gldacmodule.cxx', 'src/commons/utils.cpp', 'src/commons/stringtokenizer.cpp',
+                                 'src/commons/dataio.cpp', 'src/commons/vose.cpp', 'src/commons/suff_stats.cpp',
+                                 'src/glda/model.cpp', 'src/glda/glda.cpp'],
+                        include_dirs=['lib/'],
+                        extra_compile_args=['-march=corei7-avx', '-pthread', '-std=c++14'],
+                        extra_link_args=['-march=corei7-avx', '-pthread', '-std=c++14']
+                        )
+
+utils_module = Extension('utilsc',
+                         sources=['src/commons/utilscmodule.cxx', 'src/commons/utils.cpp', 'src/commons/dataio.cpp',
+                                  'src/commons/stirling.cpp', 'src/commons/stringtokenizer.cpp'],
+                         include_dirs=['lib/'],
+                         extra_compile_args=['-march=corei7-avx', '-pthread', '-std=c++14'],
+                         extra_link_args=['-march=corei7-avx', '-pthread', '-std=c++14']
+                         )
+
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
+setup(name='fastlvm',
+      version=version,
+      description='fastlvm -- fast search, clustering, and mixture modelling',
+      keywords='d3m_primitive',
+      license='MIT',
+      cmdclass={'build_ext': build_ext},
+      author=read_package_variable('__author__'),
+      author_email=read_package_variable('__author_email__'),
+      install_requires=['numpy>=1.13.1', 'scipy>=0.17', 'scikit-learn>=0.18.1', 'gensim'],
+      ext_modules=[covertreec_module, kmeans_module, gmm_module, lda_module, glda_module, hdp_module, utils_module],
+      long_description=long_description,
+      long_description_content_type="text/markdown",
+      packages=['fastlvm'],
+      entry_points={
+          'd3m.primitives': [
+              'classification.cover_tree.Fastlvm = fastlvm:CoverTreeClassifier',
+              'regression.cover_tree.Fastlvm = fastlvm:CoverTreeRegressor',
+              # 'clustering.cover_tree.Fastlvm = fastlvm:CoverTree',
+              'clustering.k_means.Fastlvm = fastlvm:KMeans',
+              'clustering.gmm.Fastlvm = fastlvm:GMM',
+              'natural_language_processing.lda.Fastlvm = fastlvm:LDA',
+              'natural_language_processing.glda.Fastlvm = fastlvm:GLDA',
+              'natural_language_processing.hdp.Fastlvm = fastlvm:HDP',
+          ],
+      },
+      )
