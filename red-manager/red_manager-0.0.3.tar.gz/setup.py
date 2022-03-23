@@ -1,0 +1,2 @@
+import setuptools
+setuptools.setup(name="red_manager",version="0.0.3",license="MIT",author="DaeHyeonGo",author_email="castar2001kr@naver.com",description="none",long_description=open('README.md').read(),url="https://github.com/castar2001kr/python.pkmg.git",packages=setuptools.find_packages(),classifiers=["Programming Language :: Python :: 3","License :: OSI Approved :: MIT License","Operating System :: OS Independent"],)
