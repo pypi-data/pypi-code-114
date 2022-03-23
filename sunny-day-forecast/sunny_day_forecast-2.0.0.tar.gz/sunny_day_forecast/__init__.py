@@ -1,0 +1,1 @@
+from sunny_day_forecast.sunny_day_forecast import Weather
