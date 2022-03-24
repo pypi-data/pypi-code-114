@@ -1,0 +1,5 @@
+MODBUS_TCP_VERSION = "0.01"
+
+def version():
+	global MODBUS_TCP_VERSION
+	return MODBUS_TCP_VERSION
