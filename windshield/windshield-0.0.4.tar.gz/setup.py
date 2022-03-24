@@ -1,0 +1,30 @@
+import setuptools
+from Cython.Build import cythonize
+from setuptools import setup
+
+setup(
+    name='windshield',
+    version='0.0.4',
+    packages=setuptools.find_packages(),
+    url='https://github.com/pypa/sampleproject',
+    license='MIT',
+    author='Yang Xiaoyu',
+    author_email='yangxiaoyu@flashexpress.com',
+    description='Predict point in distrct',
+    # long_description=long_description,
+    long_description_content_type="text/markdown",
+    ext_modules=cythonize(
+        ["/home/yangxiaoyu/github/precode_bk/precode/paser.py"]),
+    install_requires=['Shapely==1.8.0', 'geopandas==0.10.2'],
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires='>=3.8',
+)
+
+setup(name="paser",
+      version='0.0.1',
+      ext_modules=cythonize(
+          ["/home/yangxiaoyu/github/precode_bk/precode/paser.py"]))
