@@ -1,0 +1,7 @@
+__title__ = "FARIS Lab Training Model"
+__version__ = "0.0.10"
+__summary__ = "Neural Network Genetic Algorithm library used for deep learning problems"
+__uri__ = "https://farislab.com/"
+__author__ = "FARIS Lab"
+__email__ = "muhammadfarisadiprabowo1@gmail.com"
+__license__ = "MIT"
