@@ -1,0 +1,56 @@
+from datetime import date
+from functools import lru_cache
+from urllib.request import urlopen
+import re
+import logging
+import json
+
+class FdsnNetExtender():
+    """
+    Toolbox to manage the correspondance between a short network code and an extended network code.
+    Correspondance is made using the metadata
+    """
+    def __init__(self, base_url="http://www.fdsn.org/ws/networks/1"):
+        """
+        param: base_url is the base url for getting metadata. Default is ws.
+        """
+        # we can guess that a network is temporary from this regex:
+        logging.basicConfig()
+        self.logger = logging.getLogger()
+        self.tempo_network_re = '^[0-9XYZ][0-9A-Z]$'
+        self.base_url = base_url
+
+    @lru_cache(maxsize=1000)
+    def extend(self, net, date_string):
+        """
+        Given a short code and a year
+        Returns the corresponding extended network code for temporary networks
+        """
+        try:
+            dateparam = date.fromisoformat(date_string)
+        except ValueError:
+            raise ValueError(f"date argument is not in iso format. Expected like 2022-01-01.")
+        self.logger.debug("Trying to extend %s for %s", net, dateparam)
+        extnet = net
+        # Only extend temporary networks
+        if re.match(self.tempo_network_re, net):
+            found = False
+            request = f"{self.base_url}/query?fdsn_code={net}"
+            try:
+                with urlopen(request) as metadata:
+                    if metadata.status == 200:
+                        networks = json.loads(metadata.read().decode('utf-8'))
+                    elif metadata.status == 204:
+                        raise ValueError(f"No metadata for request {request}")
+                    for n in networks['networks']:
+                        logging.debug(net)
+                        if dateparam >= date.fromisoformat(n['start_date']) and dateparam <= date.fromisoformat(n['end_date']):
+                            extnet = n['fdsn_code'] + n['start_date'][0:4]
+                            found = True
+                            break
+            except Exception as err:
+                self.logger.error(err)
+                raise err
+            if not found:
+                raise ValueError(f"No temporary network found for {net} at {date_string}")
+        return extnet
