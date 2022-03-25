@@ -1,0 +1,1 @@
+from pydantic_shodan.models import Banner
