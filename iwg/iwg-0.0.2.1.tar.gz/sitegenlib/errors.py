@@ -1,0 +1,2 @@
+class InvalidTemplate(Exception):
+    pass
